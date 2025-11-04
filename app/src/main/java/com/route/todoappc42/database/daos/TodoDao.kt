@@ -9,6 +9,7 @@ import com.route.todoappc42.ui.model.Todo
 
 @Dao
 interface TodoDao {
+
     @Update
     fun updateTodo(todo: Todo)
 
@@ -18,12 +19,15 @@ interface TodoDao {
     @Delete
     fun deleteTodo(todo: Todo)
 
-    @Query("select * from Todo")
+
+    @Query("SELECT * FROM todos")
     fun getAllTodos(): List<Todo>
 
-    @Query("select * from Todo where id = :id")
-    fun getTodoById(id: Int): List<Todo>
 
-    @Query("select * from Todo where date = :date")
+    @Query("SELECT * FROM todos WHERE id = :id")
+    fun getTodoById(id: Int): Todo
+
+
+    @Query("SELECT * FROM todos WHERE date = :date")
     fun getTodosByDate(date: Long): List<Todo>
 }

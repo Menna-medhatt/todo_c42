@@ -3,10 +3,13 @@ package com.route.todoappc42.ui.screens.main.fragments.todo_list
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.route.todoappc42.databinding.ItemTodoBinding
 import com.route.todoappc42.ui.model.Todo
+import androidx.core.view.isVisible
+import com.route.todoappc42.R
 
 class TodosAdapter(var todos: List<Todo>) : Adapter<TodosAdapter.TodoViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TodoViewHolder {
@@ -47,15 +50,30 @@ class TodosAdapter(var todos: List<Todo>) : Adapter<TodosAdapter.TodoViewHolder>
                 itemClickListener?.onItemClick(todo)
             }
             binding.icDone.setOnClickListener {
-                itemClickListener?.onDoneClick(todo)
+                itemClickListener?.onDoneClick(todo.copy(isDone = true))
             }
             binding.deleteView.setOnClickListener {
                 itemClickListener?.onDeleteClick(todo)
             }
-            //todo: Update styles based on isDone
-//            if(todo.isDone){
-//
-//            }
+            if (todo.isDone) {
+                binding.doneLabel.isVisible = true
+                binding.icDone.isVisible = false
+                binding.verticalView.setBackgroundColor(
+                    ContextCompat.getColor(binding.root.context, R.color.green)
+                )
+                binding.itemTodoTitle.setTextColor(
+                    ContextCompat.getColor(binding.root.context, R.color.green)
+                )
+            } else {
+                binding.doneLabel.isVisible = false
+                binding.icDone.isVisible = true
+                binding.verticalView.setBackgroundColor(
+                    ContextCompat.getColor(binding.root.context, R.color.blue)
+                )
+                binding.itemTodoTitle.setTextColor(
+                    ContextCompat.getColor(binding.root.context, R.color.black)
+                )
+            }
+          }
         }
     }
-}

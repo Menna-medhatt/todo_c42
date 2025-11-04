@@ -1,19 +1,26 @@
 package com.route.todoappc42.ui.model
 
+import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.parcelize.Parcelize
 
-@Entity
+@Parcelize
+@Entity(tableName = "todos")
 data class Todo(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    @ColumnInfo
+
+    @ColumnInfo(name = "title")
     val title: String = "",
-    @ColumnInfo
+
+    @ColumnInfo(name = "description")
     val description: String = "",
-    @ColumnInfo
+
+    @ColumnInfo(name = "date")
     val date: Long,
-    @ColumnInfo
-    val isDone: Boolean,
-)
+
+    @ColumnInfo(name = "is_done")
+    val isDone: Boolean = false
+) : Parcelable

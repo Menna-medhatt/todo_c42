@@ -1,7 +1,5 @@
 package com.route.todoappc42.ui.screens.main.fragments.todo_list
 
-
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -17,23 +15,21 @@ import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import com.kizitonwose.calendar.view.DaySize
 import com.kizitonwose.calendar.view.WeekDayBinder
 import com.kizitonwose.calendar.view.WeekHeaderFooterBinder
-import com.route.todoappc42.LocationActivity
 import com.route.todoappc42.R
 import com.route.todoappc42.database.MyDatabase
 import com.route.todoappc42.databinding.FragmentTodoListBinding
 import com.route.todoappc42.ui.model.Todo
+import com.route.todoappc42.ui.screens.main.fragments.edit_task.EditFragment
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Calendar
 
 class TodoListFragment : BottomSheetDialogFragment() {
 
-    lateinit var binding: FragmentTodoListBinding
-    var adapter = TodosAdapter(emptyList())
-    var selectedDate = WeekDay(date = LocalDate.now(), position = WeekDayPosition.InDate)
+    private lateinit var binding: FragmentTodoListBinding
+    private val adapter = TodosAdapter(emptyList())
+    private var selectedDate = WeekDay(date = LocalDate.now(), position = WeekDayPosition.InDate)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -52,81 +48,86 @@ class TodoListFragment : BottomSheetDialogFragment() {
     private fun initCalendarView() {
         binding.calendarView.dayBinder = object : WeekDayBinder<DayViewHolder> {
             override fun bind(container: DayViewHolder, data: WeekDay) {
-                if (selectedDate.date.compareTo(data.date) == 0) {
-                    Log.e("initCalendarView", "selectedDate.compareTo(data.date) == 0")
-                    container.view.backgroundTintList =
-                        ContextCompat.getColorStateList(requireContext(), R.color.blue)
-                } else {
-                    container.view.backgroundTintList =
-                        ContextCompat.getColorStateList(requireContext(), R.color.white)
-                }
                 container.day.text = data.date.dayOfMonth.toString()
-                container.name.text = data.date.dayOfWeek.name
+                container.name.text = data.date.dayOfWeek.name.take(3)
+
+
+                container.view.backgroundTintList = ContextCompat.getColorStateList(
+                    requireContext(),
+                    if (data.date == selectedDate.date) R.color.blue else R.color.white
+                )
+
                 container.view.setOnClickListener {
-                    var tempDate = selectedDate.copy()
+                    val oldDate = selectedDate
                     selectedDate = data
-                    binding.calendarView.notifyDayChanged(tempDate)
+                    binding.calendarView.notifyDayChanged(oldDate)
                     binding.calendarView.notifyDayChanged(data)
                     refreshTodosList()
                 }
             }
 
-            // Called only when a new container is needed.
             override fun create(view: View) = DayViewHolder(view)
         }
+
         binding.calendarView.daySize = DaySize.FreeForm
         val currentMonth = YearMonth.now()
-        val startMonth = currentMonth.minusMonths(12) // Adjust as needed
-        val endMonth = currentMonth.plusMonths(12) // Adjust as needed
-        val firstDayOfWeek = firstDayOfWeekFromLocale() // Available from the library
+        val startMonth = currentMonth.minusMonths(12)
+        val endMonth = currentMonth.plusMonths(12)
+        val firstDayOfWeek = firstDayOfWeekFromLocale()
+
         binding.calendarView.setup(
-            startMonth.atStartOfMonth(),
-            endMonth.atStartOfMonth(),
-            firstDayOfWeek
+            startMonth.atStartOfMonth(), endMonth.atStartOfMonth(), firstDayOfWeek
         )
         binding.calendarView.scrollToWeek(LocalDate.now())
+
         binding.calendarView.weekHeaderBinder = object : WeekHeaderFooterBinder<WeekViewHolder> {
             override fun bind(container: WeekViewHolder, data: Week) {
-                container.week.text = "${data.days[0].date.month.name} - ${data.days[0].date.year}"
+                container.week.text = "${data.days[0].date.month.name} ${data.days[0].date.year}"
             }
 
-            override fun create(view: View): WeekViewHolder = WeekViewHolder(view)
-
+            override fun create(view: View) = WeekViewHolder(view)
         }
-
     }
 
     fun refreshTodosList() {
-        var todos = MyDatabase.getInstance().getTodoDao().getAllTodos()
-        todos = todos.filter {
-            val todoDate = Instant.ofEpochMilli(it.date)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
 
-            return@filter todoDate.year == selectedDate.date.year
-                    && todoDate.month == selectedDate.date.month
-                    && todoDate.dayOfMonth == selectedDate.date.dayOfMonth
+        val allTodos = MyDatabase.getInstance(requireContext()).getTodoDao().getAllTodos()
+
+
+        val filteredTodos = allTodos.filter { todo ->
+            val todoDate =
+                Instant.ofEpochMilli(todo.date).atZone(ZoneId.systemDefault()).toLocalDate()
+
+            todoDate == selectedDate.date
         }
-        adapter.submitList(todos)
+
+        adapter.submitList(filteredTodos)
     }
 
     private fun initTodosRecycler() {
         adapter.itemClickListener = object : TodosAdapter.ItemClickListener {
             override fun onItemClick(todo: Todo) {
-                val todos = MyDatabase.getInstance().getTodoDao().getTodoById(todo.id)
-                Log.e("initTodosRecycler", "todo name = ${todos.first().title}")
+
+                val editFragment = EditFragment.newInstance(todo)
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, editFragment).addToBackStack(null).commit()
             }
 
             override fun onDoneClick(todo: Todo) {
-            }
 
-            override fun onDeleteClick(todo: Todo) {
-                MyDatabase.getInstance().getTodoDao().deleteTodo(todo)
+                MyDatabase.getInstance(requireContext()).getTodoDao().updateTodo(
+                    todo.copy(isDone = !todo.isDone)
+                )
                 refreshTodosList()
             }
 
+            override fun onDeleteClick(todo: Todo) {
+
+                MyDatabase.getInstance(requireContext()).getTodoDao().deleteTodo(todo)
+                refreshTodosList()
+            }
         }
+
         binding.todosRecycler.adapter = adapter
     }
-
 }

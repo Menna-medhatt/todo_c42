@@ -15,6 +15,7 @@ import com.route.todoappc42.ui.utils.getFormattedDate
 import com.route.todoappc42.ui.utils.getFormattedTime
 import java.util.Calendar
 
+
 class AddTodoBottomSheet(var onAddClick: ()->Unit) : BottomSheetDialogFragment() {
 
     lateinit var binding: BottomSheetAddTodoBinding
@@ -54,7 +55,7 @@ class AddTodoBottomSheet(var onAddClick: ()->Unit) : BottomSheetDialogFragment()
                 description = binding.descriptionInputLayout.editText!!.text.toString().trim(),
                 date = selectedDate.timeInMillis, isDone = false
             )
-            MyDatabase.getInstance().getTodoDao().addTodo(todo)
+            MyDatabase.getInstance(requireContext())
             dismiss()
             onAddClick()
         }

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.route.todoappc42.database.daos.TodoDao
 import com.route.todoappc42.ui.model.Todo
 
-@Database(entities = [Todo::class], version = 1)
+@Database(entities = [Todo::class], version = 2)
 abstract class MyDatabase : RoomDatabase() {
     abstract fun getTodoDao(): TodoDao
 
@@ -22,7 +22,7 @@ abstract class MyDatabase : RoomDatabase() {
                     .build()
             }
         }
-        fun getInstance(): MyDatabase{
+        fun getInstance(context: Context): MyDatabase{
             return database!!
         }
     }
